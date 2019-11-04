@@ -129,6 +129,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// consolev1.AddToScheme() is deprecated, is there a better way of doing it?
 	if err := consolev1.AddToScheme(mgr.GetScheme()); err != nil {
 		log.Error(err, "")
 		os.Exit(1)

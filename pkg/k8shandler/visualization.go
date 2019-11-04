@@ -271,10 +271,23 @@ func (clusterRequest *ClusterLoggingRequest) createOrUpdateKibanaConsoleExternal
 		"kibana",
 		cluster.Namespace,
 		"Show in Kibana",
-		strings.Join([]string{kibanaURL, "/app/kibana#/discover?_g=(time:(from:now-1w,mode:relative,to:now))&_a=(columns:!(kubernetes.container_name,message),query:(query_string:(analyze_wildcard:!t,query:'kubernetes.pod_name:\"${resourceName}\" AND kubernetes.namespace_name:\"${resourceNamespace}\"')),sort:!('@timestamp',desc))#console_container_name=${containerName}"}, ""),
+		strings.Join([]string{kibanaURL,
+			"/app/kibana#/discover?_g=(time:(from:now-1w,mode:relative,to:now))&_a=(columns:!(kubernetes.container_name,message),query:(query_string:(analyze_wildcard:!t,query:'",
+			strings.Join([]string{
+				"kubernetes.pod_name:\"${resourceName}\"",
+				"kubernetes.namespace_name:\"${resourceNamespace}\"",
+				"kubernetes.container_name:\"${containerName}\"",
+			}, " AND "),
+			"')),sort:!('@timestamp',desc))"},
+			""),
 	)
 
 	utils.AddOwnerRefToObject(consoleExternalLogLink, utils.AsOwner(cluster))
+
+	// In case the object already exists we delete it first
+	if err = clusterRequest.RemoveConsoleExternalLogLink("kibana"); err != nil {
+		return
+	}
 
 	err = clusterRequest.Create(consoleExternalLogLink)
 	if err != nil && !errors.IsAlreadyExists(err) {
